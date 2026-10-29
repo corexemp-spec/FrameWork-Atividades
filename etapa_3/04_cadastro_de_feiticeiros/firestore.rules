@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /missoes_jujutsu/{missaoId} {
+      // Criar: o dono do documento tem de ser quem está logado.
+      allow create: if request.auth != null
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.titulo is string
+        && request.resource.data.grau is string
+        && request.resource.data.concluida is bool;
+
+      // Ler e apagar: só o dono que já está gravado no documento.
+      allow read, delete: if request.auth != null
+        && resource.data.usuarioId == request.auth.uid;
+
+      // Atualizar: continua sendo do mesmo dono. Não dá para transferir a missão.
+      allow update: if request.auth != null
+        && resource.data.usuarioId == request.auth.uid
+        && request.resource.data.usuarioId == resource.data.usuarioId;
+    }
+  }
+}
